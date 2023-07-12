@@ -1,5 +1,5 @@
 from docx import Document
-from docx.shared import Pt, RGBColor
+from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.oxml.ns import nsdecls
 from docx.oxml import parse_xml
@@ -8,43 +8,47 @@ def create_resume(file_path, content):
     # Create a new Document
     doc = Document()
 
+    # Set page margins
+    section = doc.sections[0]
+    section.top_margin = Inches(0.5)
+    section.bottom_margin = Inches(0.5)
+    section.left_margin = Inches(0.5)
+    section.right_margin = Inches(0.5)
+
     # Define formatting styles
-    def format_header(paragraph):
-        run = paragraph.add_run()
+    def format_header(run, font_size=Pt(12)):
         run.bold = True
         font = run.font
-        font.size = Pt(12)
+        font.size = font_size
         font.color.rgb = RGBColor(0x42, 0x24, 0xE9)  # Blue color
 
-    def format_body(paragraph):
-        run = paragraph.add_run()
+    def format_body(run):
         run.bold = False
         font = run.font
         font.size = Pt(10)
 
-    def add_section_header(doc, header_text):
+    def add_section_header(doc, header_text, font_size=Pt(12), alignment=WD_PARAGRAPH_ALIGNMENT.LEFT):
         paragraph = doc.add_paragraph()
-        format_header(paragraph)
-        paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
-        paragraph.add_run(header_text)
+        paragraph.alignment = alignment
+        run = paragraph.add_run(header_text)
+        format_header(run, font_size)
         # Add underline that spans the entire page
         paragraph._p.get_or_add_pPr().append(parse_xml(r'<w:pBdr %s><w:bottom w:val="single" w:sz="8" w:space="1" w:color="4224E9"/></w:pBdr>' % nsdecls('w')))
 
     def add_section_body(doc, body_text):
         paragraph = doc.add_paragraph()
-        format_body(paragraph)
-        paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
-        paragraph.add_run(body_text)
+        run = paragraph.add_run(body_text)
+        format_body(run)
 
     def add_bullet_points(doc, items):
         for item in items:
             paragraph = doc.add_paragraph()
-            format_body(paragraph)
+            run = paragraph.add_run(item)
+            format_body(run)
             paragraph.style = 'List Bullet'
-            paragraph.add_run(item)
 
     # Add sections to the document
-    add_section_header(doc, "Name and Contact Information")
+    add_section_header(doc, "Name and Contact Information", font_size=Pt(16), alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
     add_section_body(doc, content["contact_info"])
 
     add_section_header(doc, "Summary")
